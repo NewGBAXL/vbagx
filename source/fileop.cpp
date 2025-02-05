@@ -314,11 +314,15 @@ bool MountDVD(bool silent)
 		ISO9660_Unmount("dvd:");
 	}
 
+	DVD_Mount();
+
 	while(retry)
 	{
 		ShowAction("Loading DVD...");
 
-		if(!dvd->isInserted())
+		s32 dvdstatus = DVD_GetDriveStatus();
+
+		if (dvdstatus == DVD_STATE_NO_DISK)
 		{
 			if(silent)
 				break;
