@@ -31,6 +31,9 @@
 #include "vba/gba/bios.h"
 #include "vba/gba/GBAinline.h"
 
+#include "utils/GBA/GBALink.h"
+#include "utils/GBA/GBALinkJoyBoot.h"
+
 #define ANALOG_SENSITIVITY 30
 
 int rumbleRequest[4] = {0,0,0,0};
@@ -160,6 +163,22 @@ void ResetControls(int wiiCtrl)
 		btnmap[CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_L;
 		btnmap[CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_R;
 	}
+
+	/*** Game Boy Advance Padmap ***/
+	if (wiiCtrl == CTRLR_AGBPAD || wiiCtrl == -1)
+	{
+		i = 0;
+		btnmap[CTRLR_AGBPAD][i++] = AGBPAD_BUTTON_B;
+		btnmap[CTRLR_AGBPAD][i++] = AGBPAD_BUTTON_A;
+		btnmap[CTRLR_AGBPAD][i++] = AGBPAD_BUTTON_SELECT;
+		btnmap[CTRLR_AGBPAD][i++] = AGBPAD_BUTTON_START;
+		btnmap[CTRLR_AGBPAD][i++] = AGBPAD_BUTTON_UP;
+		btnmap[CTRLR_AGBPAD][i++] = AGBPAD_BUTTON_DOWN;
+		btnmap[CTRLR_AGBPAD][i++] = AGBPAD_BUTTON_LEFT;
+		btnmap[CTRLR_AGBPAD][i++] = AGBPAD_BUTTON_RIGHT;
+		btnmap[CTRLR_AGBPAD][i++] = AGBPAD_BUTTON_L;
+		btnmap[CTRLR_AGBPAD][i++] = AGBPAD_BUTTON_R;
+	}
 }
 
 /****************************************************************************
@@ -177,6 +196,22 @@ UpdatePads()
 	#endif
 
 	PAD_ScanPads();
+	AGBPADStatus status[4];
+	AGBPAD_ScanGBA(status);
+	if (status[0].err == AGBPAD_ERR_NONE)
+	{
+		SYS_Report("AGBPad Connected\n");
+		SYS_Report("AGBPad: %04x\n", status[0].button);
+	}
+	else if (status[0].err == AGBPAD_ERR_NO_CONTROLLER)
+	{
+		SYS_Report("AGBPad Not Connected\n");
+	}
+	else if (status[0].err == AGBPAD_ERR_NO_RESPONSE)
+	{
+		SYS_Report("AGBPad No Response\n");
+	}
+
 
 	for(int i=3; i >= 0; i--)
 	{
@@ -189,6 +224,12 @@ UpdatePads()
 		userInput[i].pad.substickY = PAD_SubStickY(i);
 		userInput[i].pad.triggerL = PAD_TriggerL(i);
 		userInput[i].pad.triggerR = PAD_TriggerR(i);
+	}
+	for (int i=3; i >= 0; i--)
+	{
+		userInput[i].agbpad.btns_d = AGBPAD_ButtonsDown(i);
+		userInput[i].agbpad.btns_u = AGBPAD_ButtonsUp(i);
+		userInput[i].agbpad.btns_h = AGBPAD_ButtonsHeld(i);
 	}
 #ifdef HW_RVL
 	if(WiiDRC_Inited() && WiiDRC_Connected())
@@ -212,8 +253,15 @@ UpdatePads()
 void
 SetupPads()
 {
+	SYS_STDIO_Report(true);
+	
 	PAD_Init();
-
+	//get multiboot image from GBALinkJoyBoot.c
+	AGBPAD_SetMultibootImage((char*)gba_rom, gba_rom_size);
+	for (int i = 0; i < 4; i++)
+	{
+		GBALINK_Init(0, (char*)gba_rom, gba_rom_size);
+	}	
 	#ifdef HW_RVL
 	// read wiimote accelerometer and IR data
 	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
@@ -245,6 +293,7 @@ void ShutoffRumble()
 	}
 #endif
 	PAD_ControlMotor(PAD_CHAN0, PAD_MOTOR_STOP);
+	AGBPAD_ControlMotor(PAD_CHAN0, PAD_MOTOR_STOP);
 }
 
 /****************************************************************************
@@ -303,6 +352,7 @@ static void updateRumble()
 	WPAD_Rumble(0, r);
 #endif
 	PAD_ControlMotor(PAD_CHAN0, r?PAD_MOTOR_RUMBLE:PAD_MOTOR_STOP);
+	AGBPAD_ControlMotor(PAD_CHAN0, r?PAD_MOTOR_RUMBLE:PAD_MOTOR_STOP);
 }
 
 void updateRumbleFrame()
@@ -443,6 +493,17 @@ u32 StandardDPad(unsigned short pad)
 		J |= VBA_LEFT;
 	else if (jp & PAD_BUTTON_RIGHT)
 		J |= VBA_RIGHT;
+
+	//GBA controller
+	u32 ap = userInput[pad].agbpad.btns_h;
+	if (ap & AGBPAD_BUTTON_UP)
+		J |= VBA_UP;
+	else if (ap & AGBPAD_BUTTON_DOWN)
+		J |= VBA_DOWN;
+	if (ap & AGBPAD_BUTTON_LEFT)
+		J |= VBA_LEFT;
+	else if (ap & AGBPAD_BUTTON_RIGHT)
+		J |= VBA_RIGHT;
 	return J;
 }
 
@@ -550,6 +611,31 @@ u32 StandardGamecube(unsigned short pad)
 	return J;
 }
 
+u32 StandardGBA(unsigned short pad)
+{
+	u32 A = 0;
+	u32 ap = userInput[pad].agbpad.btns_h;
+	if (ap & AGBPAD_BUTTON_UP)
+		A |= VBA_UP;
+	else if (ap & AGBPAD_BUTTON_DOWN)
+		A |= VBA_DOWN;
+	if (ap & AGBPAD_BUTTON_LEFT)
+		A |= VBA_LEFT;
+	else if (ap & AGBPAD_BUTTON_RIGHT)
+		A |= VBA_RIGHT;
+	if (ap & AGBPAD_BUTTON_A)
+		A |= VBA_BUTTON_A;
+	if (ap & AGBPAD_BUTTON_B)
+		A |= VBA_BUTTON_B;
+	if (ap & AGBPAD_BUTTON_START)
+		A |= VBA_BUTTON_START;
+	if (ap & AGBPAD_BUTTON_L)
+		A |= VBA_BUTTON_L;
+	if (ap & AGBPAD_BUTTON_R)
+		A |= VBA_BUTTON_R;
+	return A;
+}
+
 u32 DecodeGamecube(unsigned short pad)
 {
 	u32 J = 0;
@@ -560,6 +646,18 @@ u32 DecodeGamecube(unsigned short pad)
 			J |= vbapadmap[i];
 	}
 	return J;
+}
+
+u32 DecodeGBA(unsigned short pad)
+{
+	u32 A = 0;
+	u32 jp = userInput[pad].agbpad.btns_h;
+	for (u32 i = 0; i < MAXJP; ++i)
+	{
+		if (jp & btnmap[CTRLR_AGBPAD][i])
+			A |= vbapadmap[i];
+	}
+	return A;
 }
 
 u32 DecodeWiimote(unsigned short pad)
@@ -695,7 +793,7 @@ static u32 DecodeJoy(unsigned short pad)
 #endif
 
 	// check for games that should have special Wii controls
-	if (GCSettings.WiiControls)
+	if (GCSettings.WiiControls && (__gba_initialized_chan[pad] != 1))
 	switch (RomIdCode & 0xFFFFFF)
 	{
 		// Zelda
@@ -890,6 +988,14 @@ static u32 DecodeJoy(unsigned short pad)
 	// Report pressed buttons (gamepads)
 	u32 pad_btns_h   = userInput[pad].pad.btns_h; // GCN
 	u32 wiidrcp_btns_h  = userInput[pad].wiidrcdata.btns_h;
+	u32 agbpad_btns_h = userInput[pad].agbpad.btns_h;
+
+	for (u32 i = 0; i < MAXJP; ++i)
+	{
+		if (agbpad_btns_h & btnmap[CTRLR_AGBPAD][i])
+			J |= vbapadmap[i];
+	}
+
 #ifdef HW_RVL
 	u32 wpad_btns_h = userInput[pad].wpad->btns_h;
 	int wpad_exp_type = userInput[pad].wpad->exp.type;
@@ -957,7 +1063,10 @@ bool MenuRequested()
 			(userInput[i].pad.substickX < -70) ||
 			(userInput[i].pad.btns_h & PAD_TRIGGER_L &&
 			userInput[i].pad.btns_h & PAD_TRIGGER_R &&
-			userInput[i].pad.btns_h & PAD_BUTTON_START)
+			userInput[i].pad.btns_h & PAD_BUTTON_START) ||
+			(userInput[i].agbpad.btns_h & AGBPAD_BUTTON_L &&
+			userInput[i].agbpad.btns_h & AGBPAD_BUTTON_R &&
+			userInput[i].agbpad.btns_h & AGBPAD_BUTTON_START)
 			#ifdef HW_RVL
 			|| (userInput[i].wpad->btns_h & WPAD_BUTTON_HOME) ||
 			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME) ||

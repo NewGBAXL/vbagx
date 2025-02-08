@@ -51,6 +51,8 @@
 #include "goomba/goombarom.h"
 #include "goomba/goombasav.h"
 
+#include "utils/GBA/GBALink.h"
+
 static u32 start;
 int cartridgeType = 0;
 u32 RomIdCode;
@@ -661,10 +663,38 @@ void systemUpdateSolarSensor()
 	sun = int(float(int(sun)) * f);
 #endif
 	sensorDarkness = 0xE8 - sun;
+
+	//Get the light sensor input from the GBA directly without AGBPAD
+	if (__gba_initialized_chan[0] && (GBALINK_GetHardware(0) & CARTTYPE_LIGHT))
+	{
+		sun = GBALINK_GetLightInput(0);
+	}
 }
 
 void systemUpdateMotionSensor()
 {
+	bool gbaTilt = false;
+	bool gbaGyro = false;
+	//Get the tilt & gyro sensor input from the GBA directly without AGBPAD
+	if (__gba_initialized_chan[0])
+	{
+		u32 hardware = GBALINK_GetHardware(0);
+		if ((hardware & CARTTYPE_TILT))
+		{
+			u32 tilt = GBALINK_GetTiltInput(0);
+			sensorX = tilt & 0xFFFF;
+			sensorY = tilt >> 16;
+			gbaTilt = true;
+		}
+		if ((hardware & CARTTYPE_GYRO))
+		{
+			u64 gyro = GBALINK_GetGyroInput(0);
+			//todo: configure for insideGadgets flashcart
+			sensorWario = gyro >> 32;
+			gbaGyro = true;
+		}
+	}
+
 #ifdef HW_RVL
 	WPADData *Data = WPAD_Data(0); // first wiimote
 	WPADData data = *Data;
@@ -674,15 +704,21 @@ void systemUpdateMotionSensor()
 
 	if (TiltSideways)
 	{
-		sensorY = 2047+(data.gforce.x*50);
-		sensorX = 2047+(data.gforce.y*50);
+		if (!gbaTilt)
+		{
+			sensorY = 2047+(data.gforce.x*50);
+			sensorX = 2047+(data.gforce.y*50);
+		}
 		TiltAngle = ((-data.orient.pitch) + OldTiltAngle)*0.5f;
 		OldTiltAngle = -data.orient.pitch;
 	}
 	else
 	{
-		sensorX = 2047-(data.gforce.x*50);
-		sensorY = 2047+(data.gforce.y*50);
+		if (!gbaTilt)
+		{
+			sensorX = 2047-(data.gforce.x*50);
+			sensorY = 2047+(data.gforce.y*50);
+		}
 		TiltAngle = ((data.orient.roll) + OldTiltAngle)*0.5f;
 		OldTiltAngle = data.orient.roll;
 	}
@@ -704,8 +740,10 @@ void systemUpdateMotionSensor()
 		WasFlat = false;
 	}
 
-	sensorWario = 0x6C0+DeltaAngle*11;
-
+	if (!gbaGyro)
+	{
+		sensorWario = 0x6C0+DeltaAngle*11;
+	}
 #endif
 
 	systemUpdateSolarSensor();

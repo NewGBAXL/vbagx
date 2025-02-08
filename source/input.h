@@ -14,6 +14,7 @@
 #include <gccore.h>
 #include <wiiuse/wpad.h>
 #include "utils/wiidrc.h"
+#include "utils/GBA/AGBPAD.h"
 
 #define PADCAL				50
 #define WIIDRCCAL			20

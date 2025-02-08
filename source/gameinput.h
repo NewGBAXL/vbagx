@@ -127,10 +127,12 @@ u32 StandardMovement(unsigned short pad);
 u32 StandardSideways(unsigned short pad);
 u32 StandardClassic(unsigned short pad);
 u32 StandardGamecube(unsigned short pad);
+u32 StandardGBA(unsigned short pad);
 u32 DecodeWiimote(unsigned short pad);
 u32 DecodeClassic(unsigned short pad);
 u32 DecodeGamecube(unsigned short pad);
 u32 DecodeNunchuk(unsigned short pad);
+u32 DecodeGBA(unsigned short pad);
 
 // For developers who don't have gamecube pads but need to test gamecube input
 u32 PAD_ButtonsDownFake(unsigned short pad);

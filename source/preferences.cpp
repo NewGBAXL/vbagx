@@ -219,6 +219,7 @@ preparePrefsData ()
 	createXMLSection("Controller", "Controller Settings");
 
 	createXMLController(btnmap[CTRLR_GCPAD], "gcpadmap", "GameCube Pad");
+	createXMLController(btnmap[CTRLR_AGBPAD], "agbpadmap", "Game Boy Advance");
 	createXMLSetting("WiiControls", "Match Wii Game", toStr(GCSettings.WiiControls));
 	createXMLController(btnmap[CTRLR_WIIMOTE], "wmpadmap", "Wiimote");
 	createXMLController(btnmap[CTRLR_CLASSIC], "ccpadmap", "Classic Controller");
@@ -528,6 +529,7 @@ decodePrefsData ()
 
 			// Controller Settings
 			loadXMLController(btnmap[CTRLR_GCPAD], "gcpadmap");
+			loadXMLController(btnmap[CTRLR_AGBPAD], "agbpadmap");
 			loadXMLSetting(&GCSettings.WiiControls, "WiiControls");
 			loadXMLController(btnmap[CTRLR_WIIMOTE], "wmpadmap");
 			loadXMLController(btnmap[CTRLR_CLASSIC], "ccpadmap");

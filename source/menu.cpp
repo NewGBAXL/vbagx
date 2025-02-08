@@ -904,10 +904,10 @@ static void WindowCredits(void * ptr)
 
 		Menu_Render();
 
-		if((userInput[0].wpad->btns_d || userInput[0].pad.btns_d || userInput[0].wiidrcdata.btns_d) ||
-		   (userInput[1].wpad->btns_d || userInput[1].pad.btns_d || userInput[1].wiidrcdata.btns_d) ||
-		   (userInput[2].wpad->btns_d || userInput[2].pad.btns_d || userInput[2].wiidrcdata.btns_d) ||
-		   (userInput[3].wpad->btns_d || userInput[3].pad.btns_d || userInput[3].wiidrcdata.btns_d))
+		if ((userInput[0].wpad->btns_d || userInput[0].pad.btns_d || userInput[0].wiidrcdata.btns_d || userInput[0].agbpad.btns_d) ||
+			(userInput[1].wpad->btns_d || userInput[1].pad.btns_d || userInput[1].wiidrcdata.btns_d || userInput[1].agbpad.btns_d) ||
+			(userInput[2].wpad->btns_d || userInput[2].pad.btns_d || userInput[2].wiidrcdata.btns_d || userInput[2].agbpad.btns_d) ||
+			(userInput[3].wpad->btns_d || userInput[3].pad.btns_d || userInput[3].wiidrcdata.btns_d || userInput[3].agbpad.btns_d))
 		{
 			exit = true;
 		}
@@ -2559,6 +2559,10 @@ ButtonMappingWindow()
 
 			if(userInput[0].wpad->btns_d == WPAD_BUTTON_HOME)
 				pressed = WPAD_BUTTON_HOME;
+		}
+		else if (mapMenuCtrl == CTRLR_AGBPAD)
+		{
+			pressed = userInput[0].agbpad.btns_d;
 		}
 		else if(mapMenuCtrl == CTRLR_WIIDRC)
 		{

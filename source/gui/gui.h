@@ -133,6 +133,12 @@ typedef struct _gamepaddata {
 	s16 substickY;
 } GamePadData;
 
+typedef struct _agbpaddata {
+	u16 btns_d;
+	u16 btns_u;
+	u16 btns_h;
+} AGBPADData;
+
 #define EFFECT_SLIDE_TOP			1
 #define EFFECT_SLIDE_BOTTOM			2
 #define EFFECT_SLIDE_RIGHT			4
@@ -241,6 +247,7 @@ class GuiTrigger
 		WPADData wpaddata; //!< Wii controller trigger data
 		PADData pad; //!< GameCube controller trigger data
 		GamePadData wiidrcdata; //!< Wii U Gamepad trigger data
+		AGBPADData agbpad; //!< GBA controller trigger data
 		WPADData * wpad; //!< Wii controller trigger
 		s32 chan; //!< Trigger controller channel (0-3, -1 for all)
 		u8 type; //!< trigger type (TRIGGER_SIMPLE,	TRIGGER_HELD, TRIGGER_BUTTON_ONLY, TRIGGER_BUTTON_ONLY_IN_FOCUS)

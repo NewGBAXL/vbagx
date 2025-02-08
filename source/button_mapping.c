@@ -17,6 +17,7 @@
 #include <wiiuse/wpad.h>
 
 #include "utils/wiidrc.h"
+#include "utils/GBA/AGBPAD.h"
 #include "button_mapping.h"
 
 /****************************************************************************
@@ -25,7 +26,7 @@
  * and for displaying the name of said button
  ***************************************************************************/
 
-CtrlrMap ctrlr_def[6] = {
+CtrlrMap ctrlr_def[7] = {
 // Gamecube controller btn def
 {
 	{
@@ -157,5 +158,27 @@ CtrlrMap ctrlr_def[6] = {
 	},
 	15,
 	CTRLR_WIIDRC
+},
+// Game Boy Advance btn def
+{
+	{
+		{AGBPAD_BUTTON_DOWN, "DOWN"},
+		{AGBPAD_BUTTON_UP, "UP"},
+		{AGBPAD_BUTTON_LEFT, "LEFT"},
+		{AGBPAD_BUTTON_RIGHT, "RIGHT"},
+		{AGBPAD_BUTTON_A, "A"},
+		{AGBPAD_BUTTON_B, "B"},
+		{AGBPAD_BUTTON_START, "START"},
+		{AGBPAD_BUTTON_SELECT, "SELECT"},
+		{AGBPAD_BUTTON_L, "L"},
+		{AGBPAD_BUTTON_R, "R"},
+		{0, ""},
+		{0, ""},
+		{0, ""},
+		{0, ""},
+		{0, ""}
+	},
+	10,
+	CTRLR_AGBPAD
 }
 };
